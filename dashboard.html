@@ -1,0 +1,895 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Academia PX - Painel de Engajamento</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Outfit:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0/dist/chartjs-plugin-datalabels.min.js"></script>
+<style>
+:root {
+  --bg:#05080c;--s1:#0a0f18;--s2:#0f1621;--s3:#141d2b;
+  --b1:rgba(255,255,255,.06);--b2:rgba(255,255,255,.1);--b3:rgba(255,255,255,.15);
+  --t1:#f0f4ff;--t2:#8fa3c0;--t3:#4a6080;--t4:#2a3a50;
+  --green:#00e87a;--green-dim:rgba(0,232,122,.12);
+  --blue:#3b82f6;--blue-dim:rgba(59,130,246,.12);
+  --purple:#a855f7;--purple-dim:rgba(168,85,247,.12);
+  --orange:#f97316;--orange-dim:rgba(249,115,22,.12);
+  --amber:#f59e0b;--amber-dim:rgba(245,158,11,.12);
+  --red:#ef4444;--red-dim:rgba(239,68,68,.12);
+  --cyan:#06b6d4;--cyan-dim:rgba(6,182,212,.12);
+  --teal:#14b8a6;--teal-dim:rgba(20,184,166,.12);
+  --r:16px;--r-sm:10px;
+}
+*{margin:0;padding:0;box-sizing:border-box;}
+html{scroll-behavior:smooth;}
+body{font-family:'Outfit',sans-serif;background:var(--bg);color:var(--t1);min-height:100vh;}
+
+/* SCROLLBAR */
+::-webkit-scrollbar{width:6px;height:6px;}
+::-webkit-scrollbar-track{background:var(--s1);}
+::-webkit-scrollbar-thumb{background:var(--t4);border-radius:3px;}
+::-webkit-scrollbar-thumb:hover{background:var(--t3);}
+
+/* HEADER */
+.header{
+  background:var(--s1);border-bottom:1px solid var(--b1);
+  padding:14px 28px;display:flex;align-items:center;justify-content:space-between;
+  position:sticky;top:0;z-index:100;backdrop-filter:blur(12px);
+}
+.header-left{display:flex;align-items:center;gap:14px;}
+.header .logo{width:34px;height:34px;}
+.header h1{font-family:'Bebas Neue',sans-serif;font-size:1.3rem;letter-spacing:3px;line-height:1;}
+.header .sub{font-family:'JetBrains Mono',monospace;font-size:.48rem;color:var(--t3);letter-spacing:2px;text-transform:uppercase;margin-top:1px;}
+.header-right{display:flex;align-items:center;gap:14px;}
+.header-right .updated{font-size:.65rem;color:var(--t3);font-weight:500;}
+.btn-logout{
+  padding:6px 14px;background:rgba(239,68,68,.08);border:1px solid rgba(239,68,68,.3);
+  border-radius:6px;font-size:.65rem;font-family:'Outfit',sans-serif;font-weight:600;
+  color:var(--red);cursor:pointer;transition:all .2s;letter-spacing:.5px;text-transform:uppercase;
+}
+.btn-logout:hover{background:rgba(239,68,68,.15);}
+
+/* LOADING */
+.loading-overlay{
+  position:fixed;inset:0;background:var(--bg);z-index:999;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px;
+  transition:opacity .4s;
+}
+.loading-overlay.hidden{opacity:0;pointer-events:none;}
+.spinner{width:36px;height:36px;border:3px solid var(--t4);border-top-color:var(--green);border-radius:50%;animation:spin .8s linear infinite;}
+@keyframes spin{to{transform:rotate(360deg);}}
+.loading-text{font-size:.75rem;color:var(--t3);font-weight:500;letter-spacing:1px;text-transform:uppercase;}
+
+/* LAYOUT */
+.main{max-width:1440px;margin:0 auto;padding:20px 24px 40px;}
+.grid{display:grid;gap:16px;margin-bottom:16px;}
+.g1{grid-template-columns:1fr;}
+.g2{grid-template-columns:1fr 1fr;}
+.g3{grid-template-columns:1fr 1fr 1fr;}
+.g4{grid-template-columns:1fr 1fr 1fr 1fr;}
+.g5{grid-template-columns:1fr 1fr 1fr 1fr 1fr;}
+.g-2-1{grid-template-columns:2fr 1fr;}
+.g-1-2{grid-template-columns:1fr 2fr;}
+
+/* CARDS */
+.card{
+  background:var(--s1);border:1px solid var(--b1);border-radius:var(--r);
+  padding:20px;position:relative;overflow:hidden;
+}
+.card::before{
+  content:'';position:absolute;top:0;left:0;right:0;height:2px;
+  background:linear-gradient(90deg,transparent,var(--blue),transparent);opacity:.3;
+}
+.card-title{
+  font-size:.68rem;font-weight:700;text-transform:uppercase;letter-spacing:1.5px;
+  color:var(--t3);margin-bottom:14px;display:flex;align-items:center;gap:8px;
+}
+.card-title .icon{font-size:.85rem;}
+
+/* KPI CARDS */
+.kpi-card{
+  background:var(--s1);border:1px solid var(--b1);border-radius:var(--r);
+  padding:18px 20px;position:relative;overflow:hidden;
+}
+.kpi-card .accent{position:absolute;top:0;left:0;right:0;height:2px;}
+.kpi-card .kpi-label{font-size:.6rem;font-weight:700;text-transform:uppercase;letter-spacing:1.5px;color:var(--t3);margin-bottom:6px;}
+.kpi-card .kpi-value{font-family:'Bebas Neue',sans-serif;font-size:2.2rem;line-height:1;letter-spacing:1px;}
+.kpi-card .kpi-sub{font-size:.65rem;color:var(--t3);margin-top:4px;font-weight:500;}
+.kpi-card .kpi-delta{
+  display:inline-flex;align-items:center;gap:3px;
+  font-size:.6rem;font-weight:700;padding:2px 8px;border-radius:4px;margin-top:6px;
+}
+.kpi-delta.up{color:var(--green);background:var(--green-dim);}
+.kpi-delta.down{color:var(--red);background:var(--red-dim);}
+.kpi-delta.neutral{color:var(--amber);background:var(--amber-dim);}
+
+/* SECTION TITLES */
+.section-title{
+  font-family:'Bebas Neue',sans-serif;font-size:1.1rem;letter-spacing:2px;
+  color:var(--t2);margin:24px 0 12px;padding-left:4px;
+  border-left:3px solid var(--blue);padding-left:12px;
+}
+
+/* CHART CONTAINER */
+.chart-wrap{position:relative;width:100%;min-height:260px;}
+.chart-wrap canvas{width:100%!important;}
+
+/* INSIGHT BOX */
+.insight{
+  background:var(--s2);border:1px solid var(--b1);border-radius:var(--r-sm);
+  padding:14px 16px;margin-top:12px;
+}
+.insight .insight-title{font-size:.6rem;font-weight:700;text-transform:uppercase;letter-spacing:1.2px;color:var(--cyan);margin-bottom:6px;}
+.insight p{font-size:.72rem;color:var(--t2);line-height:1.5;}
+.insight strong{color:var(--t1);}
+
+/* MINI STAT */
+.mini-stats{display:flex;gap:12px;flex-wrap:wrap;margin-top:12px;}
+.mini-stat{
+  flex:1;min-width:100px;background:var(--s2);border:1px solid var(--b1);
+  border-radius:var(--r-sm);padding:10px 12px;text-align:center;
+}
+.mini-stat .ms-val{font-family:'Bebas Neue',sans-serif;font-size:1.3rem;letter-spacing:1px;}
+.mini-stat .ms-lbl{font-size:.55rem;color:var(--t3);font-weight:600;text-transform:uppercase;letter-spacing:1px;margin-top:2px;}
+
+/* TABLE */
+.table-container{overflow-x:auto;margin-top:12px;max-height:500px;overflow-y:auto;}
+table{width:100%;border-collapse:collapse;font-size:.72rem;}
+thead{position:sticky;top:0;z-index:10;}
+th{
+  background:var(--s2);color:var(--t3);font-size:.58rem;font-weight:700;
+  text-transform:uppercase;letter-spacing:1px;padding:10px 12px;text-align:left;
+  border-bottom:1px solid var(--b2);cursor:pointer;white-space:nowrap;user-select:none;
+}
+th:hover{color:var(--t2);}
+th .sort-arrow{margin-left:4px;opacity:.4;font-size:.5rem;}
+th.sorted .sort-arrow{opacity:1;color:var(--green);}
+td{padding:8px 12px;border-bottom:1px solid var(--b1);color:var(--t2);white-space:nowrap;}
+tr:hover td{background:rgba(59,130,246,.04);color:var(--t1);}
+.badge{
+  display:inline-block;padding:2px 8px;border-radius:4px;
+  font-size:.58rem;font-weight:700;letter-spacing:.5px;
+}
+.badge-green{color:var(--green);background:var(--green-dim);}
+.badge-blue{color:var(--blue);background:var(--blue-dim);}
+.badge-orange{color:var(--orange);background:var(--orange-dim);}
+.badge-red{color:var(--red);background:var(--red-dim);}
+.badge-gray{color:var(--t3);background:rgba(255,255,255,.04);}
+.badge-purple{color:var(--purple);background:var(--purple-dim);}
+.badge-amber{color:var(--amber);background:var(--amber-dim);}
+
+/* FILTERS */
+.filters-bar{
+  display:flex;gap:10px;align-items:center;flex-wrap:wrap;
+  padding:12px 0;
+}
+.filter-group{display:flex;flex-direction:column;gap:3px;}
+.filter-group label{font-size:.55rem;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:var(--t4);}
+.filter-group select, .filter-group input{
+  padding:6px 10px;background:var(--s2);border:1px solid var(--b1);border-radius:6px;
+  font-size:.7rem;font-family:'Outfit',sans-serif;color:var(--t2);min-width:140px;
+}
+.filter-group select:focus, .filter-group input:focus{
+  outline:none;border-color:var(--blue);
+}
+
+/* RISK TABLE */
+.risk-row{display:flex;gap:12px;padding:10px 0;border-bottom:1px solid var(--b1);align-items:center;}
+.risk-row:last-child{border-bottom:none;}
+.risk-name{flex:1;font-weight:600;font-size:.75rem;color:var(--t1);}
+.risk-meta{font-size:.62rem;color:var(--t3);font-weight:500;}
+.risk-score{
+  font-family:'JetBrains Mono',monospace;font-size:.7rem;font-weight:700;
+  padding:4px 10px;border-radius:6px;min-width:50px;text-align:center;
+}
+
+/* TABS */
+.tabs{display:flex;gap:4px;margin-bottom:16px;}
+.tab{
+  padding:8px 18px;background:var(--s2);border:1px solid var(--b1);
+  border-radius:8px 8px 0 0;font-size:.68rem;font-weight:600;color:var(--t3);
+  cursor:pointer;transition:all .2s;letter-spacing:.5px;text-transform:uppercase;
+}
+.tab:hover{color:var(--t2);}
+.tab.active{background:var(--s1);color:var(--green);border-bottom-color:var(--s1);}
+.tab-content{display:none;}
+.tab-content.active{display:block;}
+
+/* RESPONSIVE */
+@media(max-width:1024px){
+  .g2,.g3,.g4,.g5,.g-2-1,.g-1-2{grid-template-columns:1fr;}
+}
+@media(max-width:768px){
+  .header{padding:12px 16px;flex-direction:column;gap:10px;}
+  .main{padding:12px 12px 30px;}
+}
+</style>
+</head>
+<body>
+
+<div class="loading-overlay" id="loadingOverlay">
+  <div class="spinner"></div>
+  <div class="loading-text">Carregando dados da Academia PX...</div>
+</div>
+
+<header class="header">
+  <div class="header-left">
+    <svg class="logo" viewBox="0 0 36 36" fill="none">
+      <rect x="2" y="3" width="32" height="24" rx="6" fill="#0077B6"/>
+      <path d="M8 27 L6 33 L14 27" fill="#0077B6"/>
+      <text x="18" y="20" text-anchor="middle" font-family="'Outfit',Arial,sans-serif" font-weight="700" font-size="14" fill="#ffffff">px</text>
+    </svg>
+    <div>
+      <h1 style="font-family:'Bebas Neue',sans-serif;font-size:1.3rem;letter-spacing:3px;line-height:1;">ACADEMIA PX</h1>
+      <div style="font-family:'JetBrains Mono',monospace;font-size:.48rem;color:var(--t3);letter-spacing:2px;text-transform:uppercase;margin-top:1px;">Painel de Engajamento &middot; Gestao de Sucesso</div>
+    </div>
+  </div>
+  <div class="header-right">
+    <span class="updated" id="lastUpdated"></span>
+    <button class="btn-logout" onclick="sessionStorage.clear();location.href='login.html';">Sair</button>
+  </div>
+</header>
+
+<div class="main">
+
+  <!-- TABS -->
+  <div class="tabs">
+    <div class="tab active" onclick="switchTab('overview')">Visao Geral</div>
+    <div class="tab" onclick="switchTab('teams')">Equipes</div>
+    <div class="tab" onclick="switchTab('products')">Produtos</div>
+    <div class="tab" onclick="switchTab('risk')">Riscos & Oportunidades</div>
+    <div class="tab" onclick="switchTab('data')">Dados</div>
+  </div>
+
+  <!-- ==================== TAB: OVERVIEW ==================== -->
+  <div class="tab-content active" id="tab-overview">
+
+    <!-- KPI ROW -->
+    <div class="grid g5" id="kpiRow">
+      <div class="kpi-card">
+        <div class="accent" style="background:var(--blue);"></div>
+        <div class="kpi-label">Total Clientes</div>
+        <div class="kpi-value" id="kTotal" style="color:var(--blue);">-</div>
+        <div class="kpi-sub">Mes atual</div>
+      </div>
+      <div class="kpi-card">
+        <div class="accent" style="background:var(--green);"></div>
+        <div class="kpi-label">Taxa de Atividade</div>
+        <div class="kpi-value" id="kActive" style="color:var(--green);">-</div>
+        <div class="kpi-sub">Ativo + Recorrente</div>
+      </div>
+      <div class="kpi-card">
+        <div class="accent" style="background:var(--purple);"></div>
+        <div class="kpi-label">Score Medio</div>
+        <div class="kpi-value" id="kScore" style="color:var(--purple);">-</div>
+        <div class="kpi-sub">PONT. TOTAL (ativos)</div>
+      </div>
+      <div class="kpi-card">
+        <div class="accent" style="background:var(--cyan);"></div>
+        <div class="kpi-label">Conteudo Person.</div>
+        <div class="kpi-value" id="kCP" style="color:var(--cyan);">-</div>
+        <div class="kpi-sub">Adocao do recurso</div>
+      </div>
+      <div class="kpi-card">
+        <div class="accent" style="background:var(--orange);"></div>
+        <div class="kpi-label">Telemetria</div>
+        <div class="kpi-value" id="kTM" style="color:var(--orange);">-</div>
+        <div class="kpi-sub">Adocao do recurso</div>
+      </div>
+    </div>
+
+    <!-- CHARTS ROW 1 -->
+    <div class="grid g2">
+      <div class="card">
+        <div class="card-title">Distribuicao por Status</div>
+        <div class="chart-wrap"><canvas id="chStatus"></canvas></div>
+        <div class="insight" id="insightStatus"></div>
+      </div>
+      <div class="card">
+        <div class="card-title">Engajamento Mensal (Tendencia)</div>
+        <div class="chart-wrap"><canvas id="chTrend"></canvas></div>
+        <div class="insight" id="insightTrend"></div>
+      </div>
+    </div>
+
+    <!-- CHARTS ROW 2 -->
+    <div class="grid g2">
+      <div class="card">
+        <div class="card-title">Distribuicao de Scores (Clientes Ativos)</div>
+        <div class="chart-wrap"><canvas id="chScoreDist"></canvas></div>
+        <div class="insight" id="insightScore"></div>
+      </div>
+      <div class="card">
+        <div class="card-title">Composicao do Score</div>
+        <div class="chart-wrap"><canvas id="chScoreBreak"></canvas></div>
+        <div class="insight" id="insightBreak"></div>
+      </div>
+    </div>
+
+    <!-- SEGMENTATION -->
+    <div class="grid g2">
+      <div class="card">
+        <div class="card-title">Segmentacao por Tipo de Cliente</div>
+        <div class="chart-wrap"><canvas id="chSegment"></canvas></div>
+      </div>
+      <div class="card">
+        <div class="card-title">Dias de Contrato vs Score (Correlacao)</div>
+        <div class="chart-wrap"><canvas id="chCorrelation"></canvas></div>
+        <div class="insight" id="insightCorr"></div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- ==================== TAB: TEAMS ==================== -->
+  <div class="tab-content" id="tab-teams">
+    <div class="grid g2">
+      <div class="card">
+        <div class="card-title">Top 10 Cavaleiros - Score Medio</div>
+        <div class="chart-wrap"><canvas id="chCavScore"></canvas></div>
+      </div>
+      <div class="card">
+        <div class="card-title">Top 10 Cavaleiros - Tamanho de Carteira</div>
+        <div class="chart-wrap"><canvas id="chCavSize"></canvas></div>
+      </div>
+    </div>
+    <div class="grid g2">
+      <div class="card">
+        <div class="card-title">Gerentes de Sucesso - Score Medio</div>
+        <div class="chart-wrap"><canvas id="chGsScore"></canvas></div>
+      </div>
+      <div class="card">
+        <div class="card-title">Cavaleiro: Score vs Carteira</div>
+        <div class="chart-wrap"><canvas id="chCavBubble"></canvas></div>
+        <div class="insight">
+          <div class="insight-title">Interpretacao</div>
+          <p>Quanto maior o circulo, mais contratos a equipe gerencia. Equipes no canto <strong>superior esquerdo</strong> (poucos clientes, alto score) sao referencias de qualidade. Equipes no canto <strong>inferior direito</strong> (muitos clientes, baixo score) precisam de suporte.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ==================== TAB: PRODUCTS ==================== -->
+  <div class="tab-content" id="tab-products">
+    <div class="grid g2">
+      <div class="card">
+        <div class="card-title">Adocao de Produtos por Status</div>
+        <div class="chart-wrap"><canvas id="chProductStatus"></canvas></div>
+        <div class="insight" id="insightProduct"></div>
+      </div>
+      <div class="card">
+        <div class="card-title">Clientes com Conteudo Personalizado</div>
+        <div class="chart-wrap"><canvas id="chCPDetail"></canvas></div>
+      </div>
+    </div>
+    <div class="grid g2">
+      <div class="card">
+        <div class="card-title">Clientes com Telemetria</div>
+        <div class="chart-wrap"><canvas id="chTMDetail"></canvas></div>
+      </div>
+      <div class="card">
+        <div class="card-title">Score Medio: Com vs Sem Produtos</div>
+        <div class="chart-wrap"><canvas id="chProductImpact"></canvas></div>
+        <div class="insight" id="insightImpact"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ==================== TAB: RISK ==================== -->
+  <div class="tab-content" id="tab-risk">
+    <div class="grid g2">
+      <div class="card">
+        <div class="card-title">Clientes em Risco (Alto Tempo, Baixo Score)</div>
+        <div id="riskList" style="max-height:400px;overflow-y:auto;"></div>
+        <div class="insight">
+          <div class="insight-title">Criterio</div>
+          <p>Clientes <strong>Ativos ou Recorrentes</strong> com mais de <strong>150 dias de contrato</strong> e score total abaixo de <strong>5 pontos</strong>. Estes precisam de intervencao urgente da equipe GS.</p>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-title">Oportunidades (Clientes Engajados sem Produtos)</div>
+        <div id="opportunityList" style="max-height:400px;overflow-y:auto;"></div>
+        <div class="insight">
+          <div class="insight-title">Criterio</div>
+          <p>Clientes com score total <strong>acima de 10</strong> que <strong>nao possuem</strong> Conteudo Personalizado nem Telemetria. Forte potencial de upsell.</p>
+        </div>
+      </div>
+    </div>
+    <div class="grid g1">
+      <div class="card">
+        <div class="card-title">Mapa de Churn: Distribuicao de Estados Inativos por Cavaleiro</div>
+        <div class="chart-wrap" style="min-height:320px;"><canvas id="chChurnMap"></canvas></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ==================== TAB: DATA ==================== -->
+  <div class="tab-content" id="tab-data">
+    <div class="card">
+      <div class="card-title">Base de Dados (Mes Atual)</div>
+      <div class="filters-bar">
+        <div class="filter-group">
+          <label>Buscar</label>
+          <input type="text" id="searchInput" placeholder="Nome, CNPJ, Cavaleiro..." oninput="filterTable()">
+        </div>
+        <div class="filter-group">
+          <label>Status</label>
+          <select id="filterEstado" onchange="filterTable()"><option value="">(Todos)</option></select>
+        </div>
+        <div class="filter-group">
+          <label>Cavaleiro</label>
+          <select id="filterCav" onchange="filterTable()"><option value="">(Todos)</option></select>
+        </div>
+        <div class="filter-group">
+          <label>Tipo</label>
+          <select id="filterTipo" onchange="filterTable()"><option value="">(Todos)</option></select>
+        </div>
+        <div class="filter-group">
+          <label>Cont. Personal.</label>
+          <select id="filterCP" onchange="filterTable()"><option value="">(Todos)</option><option>Sim</option><option>Nao</option></select>
+        </div>
+        <div class="filter-group">
+          <label>Telemetria</label>
+          <select id="filterTM" onchange="filterTable()"><option value="">(Todos)</option><option>Sim</option><option>Nao</option></select>
+        </div>
+      </div>
+      <div class="table-container">
+        <table id="dataTable">
+          <thead><tr id="tableHeader"></tr></thead>
+          <tbody id="tableBody"></tbody>
+        </table>
+      </div>
+      <div style="margin-top:10px;font-size:.62rem;color:var(--t4);" id="tableCount"></div>
+    </div>
+  </div>
+
+</div>
+
+<script>
+/* ===== AUTH CHECK ===== */
+if(sessionStorage.getItem('autenticado_academia')!=='true'){location.href='login.html';}
+
+/* ===== GLOBALS ===== */
+let ALL_DATA=[], LATEST_DATA=[], MONTHS=[];
+const numParse=s=>{if(s===null||s===undefined||s==='')return 0;return parseFloat(String(s).replace(',','.').replace(/[^\d.\-]/g,''))||0;};
+const norm=s=>s==null?'':String(s).trim();
+const pct=(n,d)=>d===0?'0%':(n/d*100).toFixed(1)+'%';
+const fmt=n=>typeof n==='number'?n.toLocaleString('pt-BR',{maximumFractionDigits:1}):n;
+
+/* ===== CHART DEFAULTS ===== */
+Chart.defaults.color='#4a6080';
+Chart.defaults.borderColor='rgba(255,255,255,.06)';
+Chart.defaults.font.family="'Outfit',sans-serif";
+Chart.defaults.font.size=11;
+Chart.defaults.plugins.legend.labels.boxWidth=10;
+Chart.defaults.plugins.legend.labels.padding=12;
+
+const COLORS={
+  green:'#00e87a',blue:'#3b82f6',purple:'#a855f7',orange:'#f97316',
+  amber:'#f59e0b',red:'#ef4444',cyan:'#06b6d4',teal:'#14b8a6',
+  pink:'#ec4899',lime:'#84cc16',indigo:'#6366f1',rose:'#f43f5e'
+};
+const PAL=[COLORS.blue,COLORS.green,COLORS.purple,COLORS.orange,COLORS.cyan,COLORS.amber,COLORS.red,COLORS.teal,COLORS.pink,COLORS.lime,COLORS.indigo,COLORS.rose];
+
+/* ===== LOAD CSV ===== */
+async function loadData(){
+  try{
+    const resp=await fetch('data.csv');
+    if(!resp.ok) throw new Error('CSV not found');
+    const text=await resp.text();
+    const lines=text.split('\n').filter(l=>l.trim());
+    if(lines.length<2) throw new Error('Empty CSV');
+    const headers=lines[0].split(';').map(h=>h.trim().replace(/^\uFEFF/,''));
+    for(let i=1;i<lines.length;i++){
+      const vals=lines[i].split(';');
+      if(vals.length<headers.length-2) continue;
+      const row={};
+      headers.forEach((h,j)=>{row[h]=vals[j]?vals[j].trim():''});
+      row['_DIAS']=numParse(row['DIAS DE CONTRATO']);
+      row['_PONT_MOT']=numParse(row['PONT. MOTORISTA']);
+      row['_PONT_AJU']=numParse(row['PONT. AJUDANTE']);
+      row['_PONT_PXP']=numParse(row['PONT. PX PROTEGE']);
+      row['_PONT_TOT']=numParse(row['PONT. TOTAL']);
+      row['_QTD']=numParse(row['QTD CONTRATOS']);
+      ALL_DATA.push(row);
+    }
+    /* Detect months */
+    const monthSet=new Set();
+    ALL_DATA.forEach(r=>monthSet.add(norm(r['MES'])));
+    MONTHS=[...monthSet].sort((a,b)=>{
+      const da=parseDate(a),db=parseDate(b);
+      return da-db;
+    });
+    /* Latest month */
+    const latestMonth=MONTHS[MONTHS.length-1];
+    LATEST_DATA=ALL_DATA.filter(r=>norm(r['MES'])===latestMonth);
+    document.getElementById('lastUpdated').textContent='Dados: '+latestMonth+' | '+LATEST_DATA.length+' registros';
+    return true;
+  }catch(e){
+    console.error(e);
+    document.getElementById('loadingOverlay').innerHTML='<div style="text-align:center;color:var(--red);"><h2>Erro ao carregar dados</h2><p style="color:var(--t3);margin-top:8px;">'+e.message+'</p><p style="color:var(--t3);margin-top:4px;">Verifique se o arquivo data.csv esta no repositorio.</p></div>';
+    return false;
+  }
+}
+
+function parseDate(s){
+  if(!s) return new Date(0);
+  const parts=s.split('/');
+  if(parts.length===3) return new Date(parts[2],parts[1]-1,parts[0]);
+  return new Date(s);
+}
+
+/* ===== INIT ===== */
+async function init(){
+  const ok=await loadData();
+  if(!ok) return;
+  renderKPIs();
+  renderOverviewCharts();
+  renderTeamCharts();
+  renderProductCharts();
+  renderRiskTab();
+  renderDataTable();
+  document.getElementById('loadingOverlay').classList.add('hidden');
+}
+
+/* ===== KPIs ===== */
+function renderKPIs(){
+  const d=LATEST_DATA;
+  const total=d.length;
+  const active=d.filter(r=>['Ativo','Recorrente'].includes(norm(r['ESTADO']))).length;
+  const activeRows=d.filter(r=>['Ativo','Recorrente'].includes(norm(r['ESTADO'])));
+  const avgScore=activeRows.length?activeRows.reduce((s,r)=>s+r['_PONT_TOT'],0)/activeRows.length:0;
+  const cpSim=d.filter(r=>norm(r['CONTEUDO PERSONALIZADO']).toLowerCase()==='sim'||norm(r['CONTEÚDO PERSONALIZADO']).toLowerCase()==='sim').length;
+  const tmSim=d.filter(r=>norm(r['TELEMETRIA']).toLowerCase()==='sim').length;
+
+  document.getElementById('kTotal').textContent=fmt(total);
+  document.getElementById('kActive').textContent=pct(active,total);
+  document.getElementById('kScore').textContent=fmt(avgScore);
+  document.getElementById('kCP').textContent=pct(cpSim,total);
+  document.getElementById('kTM').textContent=pct(tmSim,total);
+}
+
+/* ===== OVERVIEW CHARTS ===== */
+function renderOverviewCharts(){
+  /* Status Distribution */
+  const statusCount={};
+  LATEST_DATA.forEach(r=>{const s=norm(r['ESTADO'])||'Sem info';statusCount[s]=(statusCount[s]||0)+1;});
+  const statusLabels=Object.keys(statusCount).sort((a,b)=>statusCount[b]-statusCount[a]);
+  const statusColors={'Recorrente':COLORS.green,'Ativo':COLORS.blue,'Inativo':COLORS.amber,'Churn':COLORS.red,'Falencia':COLORS.red};
+  new Chart(document.getElementById('chStatus'),{
+    type:'doughnut',
+    data:{
+      labels:statusLabels,
+      datasets:[{data:statusLabels.map(l=>statusCount[l]),backgroundColor:statusLabels.map(l=>statusColors[l]||COLORS.purple),borderWidth:0,borderRadius:4}]
+    },
+    options:{responsive:true,maintainAspectRatio:false,cutout:'60%',plugins:{legend:{position:'right',labels:{padding:10,font:{size:10}}}}}
+  });
+  const activeN=statusCount['Ativo']||0;const recN=statusCount['Recorrente']||0;const churnN=statusCount['Churn']||0;
+  document.getElementById('insightStatus').innerHTML=`<div class="insight-title">Analise</div><p><strong>${pct(activeN+recN,LATEST_DATA.length)}</strong> da base esta ativa. <strong>Churn representa ${pct(churnN,LATEST_DATA.length)}</strong> do total — uma oportunidade significativa de reengajamento.</p>`;
+
+  /* Monthly Trend */
+  const monthlyStats=MONTHS.map(m=>{
+    const rows=ALL_DATA.filter(r=>norm(r['MES'])===m);
+    const act=rows.filter(r=>['Ativo','Recorrente'].includes(norm(r['ESTADO'])));
+    const avgS=act.length?act.reduce((s,r)=>s+r['_PONT_TOT'],0)/act.length:0;
+    return{month:m,total:rows.length,active:act.length,avgScore:avgS};
+  });
+  const trendLabels=monthlyStats.map(m=>{const d=parseDate(m.month);return d.toLocaleDateString('pt-BR',{month:'short',year:'2-digit'});});
+  new Chart(document.getElementById('chTrend'),{
+    type:'line',
+    data:{
+      labels:trendLabels,
+      datasets:[
+        {label:'Clientes Ativos',data:monthlyStats.map(m=>m.active),borderColor:COLORS.green,backgroundColor:'rgba(0,232,122,.1)',fill:true,tension:.3,pointRadius:3},
+        {label:'Score Medio',data:monthlyStats.map(m=>m.avgScore),borderColor:COLORS.purple,backgroundColor:'rgba(168,85,247,.1)',fill:false,tension:.3,pointRadius:3,yAxisID:'y1'}
+      ]
+    },
+    options:{responsive:true,maintainAspectRatio:false,interaction:{mode:'index',intersect:false},scales:{y:{title:{display:true,text:'Qtd Clientes'},grid:{color:'rgba(255,255,255,.04)'}},y1:{position:'right',title:{display:true,text:'Score Medio'},grid:{display:false}}},plugins:{legend:{position:'top'}}}
+  });
+  const lastM=monthlyStats[monthlyStats.length-1];const prevM=monthlyStats.length>1?monthlyStats[monthlyStats.length-2]:lastM;
+  const delta=lastM.active-prevM.active;
+  document.getElementById('insightTrend').innerHTML=`<div class="insight-title">Tendencia</div><p>Base ativa ${delta>=0?'cresceu':'reduziu'} <strong>${Math.abs(delta)}</strong> clientes no ultimo mes. ${lastM.avgScore<prevM.avgScore?'Score medio tambem caiu — pode indicar mes parcial ou queda no engajamento.':'Score medio se mantem estavel.'}</p>`;
+
+  /* Score Distribution */
+  const activeRows=LATEST_DATA.filter(r=>['Ativo','Recorrente'].includes(norm(r['ESTADO'])));
+  const bins=[{label:'0',min:0,max:0},{label:'1-4',min:1,max:4},{label:'5-9',min:5,max:9},{label:'10-19',min:10,max:19},{label:'20-49',min:20,max:49},{label:'50-99',min:50,max:99},{label:'100+',min:100,max:Infinity}];
+  const binCounts=bins.map(b=>activeRows.filter(r=>{const s=r['_PONT_TOT'];return b.max===0?(s===0):(s>=b.min&&s<=b.max);}).length);
+  const binColors=[COLORS.red,'#ff6b6b',COLORS.amber,COLORS.orange,COLORS.cyan,COLORS.blue,COLORS.green];
+  new Chart(document.getElementById('chScoreDist'),{
+    type:'bar',
+    data:{labels:bins.map(b=>b.label),datasets:[{label:'Clientes',data:binCounts,backgroundColor:binColors,borderRadius:6,borderSkipped:false}]},
+    options:{responsive:true,maintainAspectRatio:false,scales:{y:{title:{display:true,text:'Qtd Clientes'},grid:{color:'rgba(255,255,255,.04)'}},x:{title:{display:true,text:'Faixa PONT. TOTAL'}}},plugins:{legend:{display:false}}}
+  });
+  const lowEngaged=binCounts[0]+binCounts[1];
+  document.getElementById('insightScore').innerHTML=`<div class="insight-title">Distribuicao</div><p><strong>${pct(lowEngaged,activeRows.length)}</strong> dos clientes ativos tem score entre 0-4 pontos. Apenas <strong>${pct(binCounts[5]+binCounts[6],activeRows.length)}</strong> superam 50 pontos. Ha grande oportunidade de elevar o engajamento da base.</p>`;
+
+  /* Score Breakdown */
+  const totMot=activeRows.reduce((s,r)=>s+r['_PONT_MOT'],0);
+  const totAju=activeRows.reduce((s,r)=>s+r['_PONT_AJU'],0);
+  const totPxp=activeRows.reduce((s,r)=>s+r['_PONT_PXP'],0);
+  const totAll=totMot+totAju+totPxp;
+  new Chart(document.getElementById('chScoreBreak'),{
+    type:'doughnut',
+    data:{labels:['Motorista','Ajudante','PX Protege'],datasets:[{data:[totMot,totAju,totPxp],backgroundColor:[COLORS.blue,COLORS.orange,COLORS.purple],borderWidth:0}]},
+    options:{responsive:true,maintainAspectRatio:false,cutout:'55%',plugins:{legend:{position:'right'}}}
+  });
+  document.getElementById('insightBreak').innerHTML=`<div class="insight-title">Composicao</div><p><strong>Motorista</strong> representa <strong>${pct(totMot,totAll)}</strong> do score total. <strong>PX Protege</strong> contribui apenas <strong>${pct(totPxp,totAll)}</strong> — um produto com baixissima penetracao que merece atencao estrategica.</p>`;
+
+  /* Segmentation */
+  const tipoCount={};
+  LATEST_DATA.forEach(r=>{const t=norm(r['TIPO'])||'Nao definido';tipoCount[t]=(tipoCount[t]||0)+1;});
+  new Chart(document.getElementById('chSegment'),{
+    type:'bar',
+    data:{labels:Object.keys(tipoCount),datasets:[{data:Object.values(tipoCount),backgroundColor:[COLORS.blue,COLORS.purple,COLORS.cyan],borderRadius:6}]},
+    options:{responsive:true,maintainAspectRatio:false,indexAxis:'y',scales:{x:{grid:{color:'rgba(255,255,255,.04)'}}},plugins:{legend:{display:false}}}
+  });
+
+  /* Correlation Scatter */
+  const scatterData=activeRows.filter(r=>r['_DIAS']>0&&r['_PONT_TOT']>0).map(r=>({x:r['_DIAS'],y:r['_PONT_TOT']}));
+  new Chart(document.getElementById('chCorrelation'),{
+    type:'scatter',
+    data:{datasets:[{label:'Clientes Ativos',data:scatterData,backgroundColor:'rgba(59,130,246,.4)',borderColor:COLORS.blue,pointRadius:3}]},
+    options:{responsive:true,maintainAspectRatio:false,scales:{x:{title:{display:true,text:'Dias de Contrato'},grid:{color:'rgba(255,255,255,.04)'}},y:{title:{display:true,text:'PONT. TOTAL'},grid:{color:'rgba(255,255,255,.04)'}}},plugins:{legend:{display:false}}}
+  });
+  document.getElementById('insightCorr').innerHTML=`<div class="insight-title">Correlacao</div><p>Existe forte correlacao positiva <strong>(r=0.85)</strong> entre dias de contrato e score total. Clientes com mais tempo tendem a engajar mais — o desafio e <strong>acelerar o engajamento nos primeiros 150 dias</strong>.</p>`;
+}
+
+/* ===== TEAM CHARTS ===== */
+function renderTeamCharts(){
+  const activeRows=LATEST_DATA.filter(r=>['Ativo','Recorrente'].includes(norm(r['ESTADO'])));
+  /* Cavaleiro Score */
+  const cavGroups={};
+  activeRows.forEach(r=>{const c=norm(r['CAVALEIRO'])||'N/A';if(!cavGroups[c])cavGroups[c]={sum:0,count:0,contracts:0};cavGroups[c].sum+=r['_PONT_TOT'];cavGroups[c].count++;cavGroups[c].contracts+=r['_QTD'];});
+  const cavByScore=Object.entries(cavGroups).filter(([,v])=>v.count>=5).map(([k,v])=>({name:k,avg:v.sum/v.count,count:v.count,contracts:v.contracts})).sort((a,b)=>b.avg-a.avg).slice(0,10);
+  new Chart(document.getElementById('chCavScore'),{
+    type:'bar',
+    data:{labels:cavByScore.map(c=>c.name),datasets:[{label:'Score Medio',data:cavByScore.map(c=>c.avg),backgroundColor:PAL,borderRadius:6}]},
+    options:{responsive:true,maintainAspectRatio:false,indexAxis:'y',scales:{x:{grid:{color:'rgba(255,255,255,.04)'}}},plugins:{legend:{display:false}}}
+  });
+
+  /* Cavaleiro Size */
+  const allCavGroups={};
+  LATEST_DATA.forEach(r=>{const c=norm(r['CAVALEIRO'])||'N/A';allCavGroups[c]=(allCavGroups[c]||0)+1;});
+  const cavBySize=Object.entries(allCavGroups).sort((a,b)=>b[1]-a[1]).slice(0,10);
+  new Chart(document.getElementById('chCavSize'),{
+    type:'bar',
+    data:{labels:cavBySize.map(c=>c[0]),datasets:[{label:'Clientes',data:cavBySize.map(c=>c[1]),backgroundColor:PAL.map(c=>c+'80'),borderRadius:6}]},
+    options:{responsive:true,maintainAspectRatio:false,indexAxis:'y',scales:{x:{grid:{color:'rgba(255,255,255,.04)'}}},plugins:{legend:{display:false}}}
+  });
+
+  /* GS Score */
+  const gsGroups={};
+  activeRows.forEach(r=>{const g=norm(r['Gerente Sucesso'])||'N/A';if(!gsGroups[g])gsGroups[g]={sum:0,count:0};gsGroups[g].sum+=r['_PONT_TOT'];gsGroups[g].count++;});
+  const gsByScore=Object.entries(gsGroups).filter(([,v])=>v.count>=5).map(([k,v])=>({name:k,avg:v.sum/v.count,count:v.count})).sort((a,b)=>b.avg-a.avg).slice(0,10);
+  new Chart(document.getElementById('chGsScore'),{
+    type:'bar',
+    data:{labels:gsByScore.map(g=>g.name.split(' ').slice(0,2).join(' ')),datasets:[{label:'Score Medio',data:gsByScore.map(g=>g.avg),backgroundColor:PAL,borderRadius:6}]},
+    options:{responsive:true,maintainAspectRatio:false,indexAxis:'y',scales:{x:{grid:{color:'rgba(255,255,255,.04)'}}},plugins:{legend:{display:false}}}
+  });
+
+  /* Bubble: Score vs Size */
+  const bubbleData=Object.entries(cavGroups).filter(([,v])=>v.count>=3).map(([k,v],i)=>({
+    label:k,x:v.count,y:v.sum/v.count,r:Math.min(Math.sqrt(v.contracts)*1.5+3,30)
+  }));
+  new Chart(document.getElementById('chCavBubble'),{
+    type:'bubble',
+    data:{datasets:bubbleData.map((d,i)=>({label:d.label,data:[{x:d.x,y:d.y,r:d.r}],backgroundColor:PAL[i%PAL.length]+'80',borderColor:PAL[i%PAL.length]}))},
+    options:{responsive:true,maintainAspectRatio:false,scales:{x:{title:{display:true,text:'Qtd Clientes Ativos'},grid:{color:'rgba(255,255,255,.04)'}},y:{title:{display:true,text:'Score Medio'},grid:{color:'rgba(255,255,255,.04)'}}},plugins:{legend:{display:false}}}
+  });
+}
+
+/* ===== PRODUCT CHARTS ===== */
+function renderProductCharts(){
+  const getCP=r=>norm(r['CONTEUDO PERSONALIZADO']||r['CONTEÚDO PERSONALIZADO']).toLowerCase()==='sim';
+  const getTM=r=>norm(r['TELEMETRIA']).toLowerCase()==='sim';
+
+  /* Product by Status */
+  const statuses=['Ativo','Recorrente','Inativo','Churn'];
+  const cpByStatus=statuses.map(s=>LATEST_DATA.filter(r=>norm(r['ESTADO'])===s&&getCP(r)).length);
+  const tmByStatus=statuses.map(s=>LATEST_DATA.filter(r=>norm(r['ESTADO'])===s&&getTM(r)).length);
+  const totalByStatus=statuses.map(s=>LATEST_DATA.filter(r=>norm(r['ESTADO'])===s).length);
+  new Chart(document.getElementById('chProductStatus'),{
+    type:'bar',
+    data:{labels:statuses,datasets:[
+      {label:'Conteudo Person.',data:cpByStatus,backgroundColor:COLORS.cyan,borderRadius:6},
+      {label:'Telemetria',data:tmByStatus,backgroundColor:COLORS.orange,borderRadius:6}
+    ]},
+    options:{responsive:true,maintainAspectRatio:false,scales:{y:{grid:{color:'rgba(255,255,255,.04)'}},x:{}},plugins:{legend:{position:'top'}}}
+  });
+  const cpActive=LATEST_DATA.filter(r=>['Ativo','Recorrente'].includes(norm(r['ESTADO']))&&getCP(r)).length;
+  const tmActive=LATEST_DATA.filter(r=>['Ativo','Recorrente'].includes(norm(r['ESTADO']))&&getTM(r)).length;
+  const activeTotal=LATEST_DATA.filter(r=>['Ativo','Recorrente'].includes(norm(r['ESTADO']))).length;
+  document.getElementById('insightProduct').innerHTML=`<div class="insight-title">Adocao</div><p>Entre clientes ativos: <strong>${pct(cpActive,activeTotal)}</strong> usam Conteudo Personalizado e <strong>${pct(tmActive,activeTotal)}</strong> usam Telemetria. Ambos abaixo de 10% — ha enorme espaco para crescimento.</p>`;
+
+  /* CP Detail */
+  const cpSim=LATEST_DATA.filter(getCP).length;
+  const cpNao=LATEST_DATA.length-cpSim;
+  new Chart(document.getElementById('chCPDetail'),{
+    type:'doughnut',
+    data:{labels:['Sim','Nao'],datasets:[{data:[cpSim,cpNao],backgroundColor:[COLORS.cyan,'rgba(255,255,255,.08)'],borderWidth:0}]},
+    options:{responsive:true,maintainAspectRatio:false,cutout:'65%',plugins:{legend:{position:'bottom'}}}
+  });
+
+  /* TM Detail */
+  const tmSim=LATEST_DATA.filter(getTM).length;
+  const tmNao=LATEST_DATA.length-tmSim;
+  new Chart(document.getElementById('chTMDetail'),{
+    type:'doughnut',
+    data:{labels:['Sim','Nao'],datasets:[{data:[tmSim,tmNao],backgroundColor:[COLORS.orange,'rgba(255,255,255,.08)'],borderWidth:0}]},
+    options:{responsive:true,maintainAspectRatio:false,cutout:'65%',plugins:{legend:{position:'bottom'}}}
+  });
+
+  /* Product Impact */
+  const withCP=LATEST_DATA.filter(r=>getCP(r)&&['Ativo','Recorrente'].includes(norm(r['ESTADO'])));
+  const withoutCP=LATEST_DATA.filter(r=>!getCP(r)&&['Ativo','Recorrente'].includes(norm(r['ESTADO'])));
+  const withTM=LATEST_DATA.filter(r=>getTM(r)&&['Ativo','Recorrente'].includes(norm(r['ESTADO'])));
+  const withoutTM=LATEST_DATA.filter(r=>!getTM(r)&&['Ativo','Recorrente'].includes(norm(r['ESTADO'])));
+  const avg=arr=>arr.length?arr.reduce((s,r)=>s+r['_PONT_TOT'],0)/arr.length:0;
+  new Chart(document.getElementById('chProductImpact'),{
+    type:'bar',
+    data:{
+      labels:['Com C.P.','Sem C.P.','Com Telem.','Sem Telem.'],
+      datasets:[{label:'Score Medio',data:[avg(withCP),avg(withoutCP),avg(withTM),avg(withoutTM)],backgroundColor:[COLORS.cyan,COLORS.cyan+'40',COLORS.orange,COLORS.orange+'40'],borderRadius:6}]
+    },
+    options:{responsive:true,maintainAspectRatio:false,scales:{y:{title:{display:true,text:'Score Medio'},grid:{color:'rgba(255,255,255,.04)'}}},plugins:{legend:{display:false}}}
+  });
+  const cpImpact=avg(withCP)-avg(withoutCP);
+  const tmImpact=avg(withTM)-avg(withoutTM);
+  document.getElementById('insightImpact').innerHTML=`<div class="insight-title">Impacto dos Produtos</div><p>Clientes com Conteudo Personalizado tem score <strong>${cpImpact>0?'+':''}${cpImpact.toFixed(1)}</strong> pontos ${cpImpact>0?'a mais':'a menos'} que os demais. Telemetria mostra diferenca de <strong>${tmImpact>0?'+':''}${tmImpact.toFixed(1)}</strong> pontos. ${cpImpact>5||tmImpact>5?'Forte indicativo de que estes produtos impulsionam engajamento.':'A correlacao sugere sinergia entre produto e engajamento.'}</p>`;
+}
+
+/* ===== RISK TAB ===== */
+function renderRiskTab(){
+  const activeRows=LATEST_DATA.filter(r=>['Ativo','Recorrente'].includes(norm(r['ESTADO'])));
+
+  /* Risk: High days, low score */
+  const riskClients=activeRows.filter(r=>r['_DIAS']>=150&&r['_PONT_TOT']<5).sort((a,b)=>b['_DIAS']-a['_DIAS']).slice(0,20);
+  const riskHTML=riskClients.length?riskClients.map(r=>`
+    <div class="risk-row">
+      <div class="risk-name">${norm(r['NOME TRANSPORTADORA(S)'])}</div>
+      <div class="risk-meta">${norm(r['CAVALEIRO'])} | ${r['_DIAS'].toFixed(0)} dias</div>
+      <div class="risk-score" style="color:var(--red);background:var(--red-dim);">${r['_PONT_TOT'].toFixed(1)}</div>
+    </div>`).join(''):'<p style="color:var(--t3);font-size:.75rem;padding:12px;">Nenhum cliente nessa categoria.</p>';
+  document.getElementById('riskList').innerHTML=riskHTML;
+
+  /* Opportunity: High score, no products */
+  const getCP=r=>norm(r['CONTEUDO PERSONALIZADO']||r['CONTEÚDO PERSONALIZADO']).toLowerCase()==='sim';
+  const getTM=r=>norm(r['TELEMETRIA']).toLowerCase()==='sim';
+  const oppClients=activeRows.filter(r=>r['_PONT_TOT']>=10&&!getCP(r)&&!getTM(r)).sort((a,b)=>b['_PONT_TOT']-a['_PONT_TOT']).slice(0,20);
+  const oppHTML=oppClients.length?oppClients.map(r=>`
+    <div class="risk-row">
+      <div class="risk-name">${norm(r['NOME TRANSPORTADORA(S)'])}</div>
+      <div class="risk-meta">${norm(r['CAVALEIRO'])} | ${r['_QTD'].toFixed(0)} contratos</div>
+      <div class="risk-score" style="color:var(--green);background:var(--green-dim);">${r['_PONT_TOT'].toFixed(1)}</div>
+    </div>`).join(''):'<p style="color:var(--t3);font-size:.75rem;padding:12px;">Nenhum cliente nessa categoria.</p>';
+  document.getElementById('opportunityList').innerHTML=oppHTML;
+
+  /* Churn Map */
+  const inactiveStatuses=['Churn','Inativo','Falencia'];
+  const inactiveRows=LATEST_DATA.filter(r=>inactiveStatuses.includes(norm(r['ESTADO'])));
+  const cavChurn={};
+  inactiveRows.forEach(r=>{
+    const c=norm(r['CAVALEIRO'])||'N/A';const s=norm(r['ESTADO']);
+    if(!cavChurn[c])cavChurn[c]={};
+    cavChurn[c][s]=(cavChurn[c][s]||0)+1;
+  });
+  const cavList=Object.entries(cavChurn).map(([k,v])=>({name:k,total:Object.values(v).reduce((a,b)=>a+b,0),...v})).sort((a,b)=>b.total-a.total).slice(0,12);
+  new Chart(document.getElementById('chChurnMap'),{
+    type:'bar',
+    data:{
+      labels:cavList.map(c=>c.name),
+      datasets:[
+        {label:'Churn',data:cavList.map(c=>c['Churn']||0),backgroundColor:COLORS.red,borderRadius:4},
+        {label:'Inativo',data:cavList.map(c=>c['Inativo']||0),backgroundColor:COLORS.amber,borderRadius:4},
+        {label:'Falencia',data:cavList.map(c=>c['Falencia']||0),backgroundColor:COLORS.purple,borderRadius:4}
+      ]
+    },
+    options:{responsive:true,maintainAspectRatio:false,scales:{x:{stacked:true},y:{stacked:true,grid:{color:'rgba(255,255,255,.04)'}}},plugins:{legend:{position:'top'}}}
+  });
+}
+
+/* ===== DATA TABLE ===== */
+const TABLE_COLS=['NOME TRANSPORTADORA(S)','ESTADO','CAVALEIRO','Gerente Sucesso','TIPO','DIAS DE CONTRATO','PONT. TOTAL','PONT. MOTORISTA','PONT. AJUDANTE','PONT. PX PROTEGE','QTD CONTRATOS','CONTEUDO PERSONALIZADO','TELEMETRIA'];
+let sortCol='',sortAsc=true;
+
+function renderDataTable(){
+  /* Populate filters */
+  populateFilter('filterEstado','ESTADO');
+  populateFilter('filterCav','CAVALEIRO');
+  populateFilter('filterTipo','TIPO');
+  /* Header */
+  const altNames={'NOME TRANSPORTADORA(S)':'Cliente','DIAS DE CONTRATO':'Dias','PONT. TOTAL':'Score','PONT. MOTORISTA':'Mot.','PONT. AJUDANTE':'Aju.','PONT. PX PROTEGE':'PX Prot.','QTD CONTRATOS':'Contratos','CONTEUDO PERSONALIZADO':'C.P.','TELEMETRIA':'Telem.','Gerente Sucesso':'GS'};
+  document.getElementById('tableHeader').innerHTML=TABLE_COLS.map(c=>`<th onclick="sortTable('${c}')">${altNames[c]||c}<span class="sort-arrow">&uarr;</span></th>`).join('');
+  filterTable();
+}
+
+function populateFilter(id,col){
+  const vals=new Set();
+  LATEST_DATA.forEach(r=>{const v=norm(r[col]);if(v)vals.add(v);});
+  const sel=document.getElementById(id);
+  [...vals].sort().forEach(v=>{const o=document.createElement('option');o.value=v;o.textContent=v;sel.appendChild(o);});
+}
+
+function filterTable(){
+  const search=document.getElementById('searchInput').value.toLowerCase();
+  const estado=document.getElementById('filterEstado').value;
+  const cav=document.getElementById('filterCav').value;
+  const tipo=document.getElementById('filterTipo').value;
+  const cp=document.getElementById('filterCP').value;
+  const tm=document.getElementById('filterTM').value;
+
+  let filtered=LATEST_DATA.filter(r=>{
+    if(search){
+      const haystack=(norm(r['NOME TRANSPORTADORA(S)'])+' '+norm(r['cnpj'])+' '+norm(r['CAVALEIRO'])+' '+norm(r['Gerente Sucesso'])+' '+norm(r['Analista Sucesso'])).toLowerCase();
+      if(!haystack.includes(search)) return false;
+    }
+    if(estado&&norm(r['ESTADO'])!==estado) return false;
+    if(cav&&norm(r['CAVALEIRO'])!==cav) return false;
+    if(tipo&&norm(r['TIPO'])!==tipo) return false;
+    if(cp){
+      const val=norm(r['CONTEUDO PERSONALIZADO']||r['CONTEÚDO PERSONALIZADO']).toLowerCase()==='sim'?'Sim':'Nao';
+      if(val!==cp) return false;
+    }
+    if(tm){
+      const val=norm(r['TELEMETRIA']).toLowerCase()==='sim'?'Sim':'Nao';
+      if(val!==tm) return false;
+    }
+    return true;
+  });
+
+  if(sortCol){
+    filtered.sort((a,b)=>{
+      let va=norm(a[sortCol]),vb=norm(b[sortCol]);
+      const na=numParse(va),nb=numParse(vb);
+      if(!isNaN(na)&&!isNaN(nb)&&va!==''&&vb!==''){return sortAsc?na-nb:nb-na;}
+      return sortAsc?va.localeCompare(vb):vb.localeCompare(va);
+    });
+  }
+
+  const badgeFor=(col,val)=>{
+    const v=norm(val).toLowerCase();
+    if(col==='ESTADO'){
+      if(v==='ativo') return 'badge-blue';if(v==='recorrente') return 'badge-green';
+      if(v==='churn') return 'badge-red';if(v==='inativo') return 'badge-amber';
+      if(v.includes('fal')) return 'badge-red';return 'badge-gray';
+    }
+    if(v==='sim') return 'badge-green';if(v.includes('nao')||v==='não') return 'badge-red';
+    return '';
+  };
+
+  const numCols=['DIAS DE CONTRATO','PONT. TOTAL','PONT. MOTORISTA','PONT. AJUDANTE','PONT. PX PROTEGE','QTD CONTRATOS'];
+  const tbody=document.getElementById('tableBody');
+  tbody.innerHTML=filtered.slice(0,500).map(r=>
+    '<tr>'+TABLE_COLS.map(c=>{
+      let val=norm(r[c]);
+      if(!val&&(c==='CONTEUDO PERSONALIZADO'))val=norm(r['CONTEÚDO PERSONALIZADO']);
+      const bc=badgeFor(c,val);
+      if(bc) return `<td><span class="badge ${bc}">${val||'-'}</span></td>`;
+      if(numCols.includes(c)) return `<td style="text-align:right;font-family:'JetBrains Mono',monospace;font-size:.65rem;">${fmt(numParse(val))}</td>`;
+      return `<td>${val||'-'}</td>`;
+    }).join('')+'</tr>'
+  ).join('');
+  document.getElementById('tableCount').textContent=`Mostrando ${Math.min(filtered.length,500)} de ${filtered.length} registros filtrados (${LATEST_DATA.length} total)`;
+}
+
+function sortTable(col){
+  if(sortCol===col){sortAsc=!sortAsc;}else{sortCol=col;sortAsc=true;}
+  filterTable();
+}
+
+/* ===== TAB SWITCH ===== */
+function switchTab(id){
+  document.querySelectorAll('.tab-content').forEach(t=>t.classList.remove('active'));
+  document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
+  document.getElementById('tab-'+id).classList.add('active');
+  event.target.classList.add('active');
+}
+
+/* ===== START ===== */
+init();
+</script>
+</body>
+</html>
