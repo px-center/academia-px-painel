@@ -13,5 +13,6 @@ cd /d "%PASTA_REPO%"
 
 REM Git commit e push
 git add "data.csv"
+if exist "edits.json" git add "edits.json"
 git commit -m "Atualizar dados - %date% %time%"
 git push origin main
