@@ -357,33 +357,21 @@ var o=[];var l=Array.isArray(e);for(f=n.s.c;f<=n.e.c;++f)s[f]=ya(f);for(var c=n.
     <div class="card" id="uploadCard" style="position:relative;">
       <div style="display:flex; justify-content:space-between; gap:12px; flex-wrap:wrap; align-items:flex-end;">
         <div style="min-width:280px; flex:1;">
-          <h2>Upload do Excel</h2>
-          <div class="muted small">Envie o <b>.xlsx</b> — o painel lê localmente e recalcula tudo.</div>
+          <h2>Base Conectada</h2>
+          <div class="muted small">Dados carregados automaticamente do repositorio. Atualizacao a cada 30 min.</div>
         </div>
         <div class="btns">
-          <button class="btn warn" onclick="resetGsEdits()">Reset edições Visão GS</button>
-        </div>
-      </div>
-
-      <div class="drop" id="dropZone" style="margin-top:12px;">
-        <div>
-          <strong>Arraste e solte o arquivo aqui</strong>
-          <div class="hint">ou clique em "Escolher arquivo"</div>
-        </div>
-        <div style="display:flex; gap:10px; flex-wrap:wrap; align-items:center;">
-          <input id="fileInput" type="file" accept=".xlsx,.xls" style="display:none;" />
-          <button class="btn primary" onclick="triggerPick()">Escolher arquivo</button>
-          <span id="fileName" class="muted small"></span>
+          <button class="btn warn" onclick="resetGsEdits()">Reset edicoes Visao GS</button>
         </div>
       </div>
       <div class="error" id="errBox"></div>
       <div class="loading-overlay" id="uploadLoading">
         <div class="spinner"></div>
-        <div class="loading-text">Processando arquivo...</div>
+        <div class="loading-text">Carregando dados...</div>
       </div>
     </div>
 
-    <div class="card" id="filtersCard" style="display:none;">
+    <div class="card" id="filtersCard">
       <div class="filters-section">
         <button class="filters-toggle" id="filtersToggle" onclick="toggleFilters()">
           <span class="arrow">▼</span> Filtros
@@ -1355,27 +1343,7 @@ var o=[];var l=Array.isArray(e);for(f=n.s.c;f<=n.e.c;++f)s[f]=ya(f);for(var c=n.
   }
 
   // ==================== Event Handlers ====================
-  const dz = document.getElementById("dropZone");
-  dz.addEventListener("dragenter", (e) => { e.preventDefault(); dz.classList.add("drag-active"); });
-  dz.addEventListener("dragover", (e) => { e.preventDefault(); dz.classList.add("drag-active"); });
-  dz.addEventListener("dragleave", (e) => {
-    if (!dz.contains(e.relatedTarget)) dz.classList.remove("drag-active");
-  });
-  dz.addEventListener("drop", (e) => {
-    e.preventDefault();
-    dz.classList.remove("drag-active");
-    const f = e.dataTransfer.files?.[0];
-    if (f) handleFile(f);
-  });
-
-  document.addEventListener("dragover", (e) => e.preventDefault());
-  document.addEventListener("drop", (e) => e.preventDefault());
-
-  document.getElementById("fileInput").addEventListener("change", (e) => {
-    const f = e.target.files?.[0];
-    if (f) handleFile(f);
-    e.target.value = "";
-  });
+  // Upload removido — dados carregados automaticamente via data.csv
 
   // Init defaults
   (function initConfigDefaults(){
@@ -1404,15 +1372,13 @@ var o=[];var l=Array.isArray(e);for(f=n.s.c;f<=n.e.c;++f)s[f]=ya(f);for(var c=n.
       }
       if (!rows.length) return;
 
-      // Get latest month only
+      // Load ALL months (base completa)
       const months = [...new Set(rows.map(r => norm(r['MES'])))].filter(m => m).sort((a,b) => {
         const pa = a.split('/'), pb = b.split('/');
         return (pa[2]+pa[1]+pa[0]).localeCompare(pb[2]+pb[1]+pb[0]);
       });
-      const latestMonth = months[months.length - 1];
-      const latestRows = latestMonth ? rows.filter(r => norm(r['MES']) === latestMonth) : rows;
 
-      const mapped = mapAndEnrichRows(latestRows);
+      const mapped = mapAndEnrichRows(rows);
       if (!mapped.length) return;
 
       BASE_DATA = mapped;
@@ -1421,7 +1387,12 @@ var o=[];var l=Array.isArray(e);for(f=n.s.c;f<=n.e.c;++f)s[f]=ya(f);for(var c=n.
       ensureTable();
       applyFilters();
 
-      document.getElementById("fileInfo").innerHTML = '<span style="color:var(--success);">&#10003;</span> Dados carregados automaticamente (' + latestRows.length + ' registros, mes: ' + (latestMonth||'todos') + ')';
+      // Show UI elements that were hidden before data load
+      document.getElementById("filtersCard").style.display = "block";
+      document.getElementById("progressSection").classList.add("visible");
+
+      const latestMonth = months.length ? months[months.length - 1] : 'N/A';
+      document.getElementById("fileInfo").innerHTML = '<span style="color:var(--success);">&#10003;</span> Base conectada (' + rows.length + ' registros, ' + months.length + ' meses, ultimo: ' + latestMonth + ')';
 
       // Load shared edits from repo
       await loadSharedEdits();
