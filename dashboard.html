@@ -461,26 +461,26 @@ var o=[];var l=Array.isArray(e);for(f=n.s.c;f<=n.e.c;++f)s[f]=ya(f);for(var c=n.
     </div>
 
     <!-- TAB: DADOS (OPERACIONAL) -->
-    <div id="tabRaw" class="card" style="display:none;">
-      <div style="display:flex; align-items:flex-end; justify-content:space-between; gap:12px; flex-wrap:wrap;">
-        <div style="flex:1; min-width:260px;">
-          <h2>Dados operacionais</h2>
-          <div class="muted small">Edite as colunas "Visão GS" para marcar negociação como <b>Em andamento</b>. Isso recalcula o painel.</div>
+    <div id="tabRaw" class="card" style="display:none; padding:12px 16px;">
+      <div style="display:flex; align-items:center; justify-content:space-between; gap:8px; flex-wrap:wrap;">
+        <div style="flex:1; min-width:200px;">
+          <h2 style="font-size:15px; margin:0;">Dados operacionais</h2>
+          <div class="muted small" style="font-size:11px;">Edite "Visão GS" para marcar negociação. Recalcula o painel automaticamente.</div>
         </div>
       </div>
 
-      <div style="margin-top:12px;">
+      <div style="margin-top:6px;">
         <div id="table"></div>
       </div>
 
-      <div class="grid2" style="margin-top:16px;">
-        <div class="card" style="margin:0;">
-          <h2>Qualidade de dados</h2>
-          <div id="dq" class="small"></div>
+      <div class="grid2" style="margin-top:8px; gap:8px;">
+        <div class="card" style="margin:0; padding:10px 14px;">
+          <h2 style="font-size:13px; margin:0 0 4px 0;">Qualidade de dados</h2>
+          <div id="dq" class="small" style="font-size:11px;"></div>
         </div>
-        <div class="card" style="margin:0;">
-          <h2>Notas operacionais</h2>
-          <div class="muted small" id="opsNotes"></div>
+        <div class="card" style="margin:0; padding:10px 14px;">
+          <h2 style="font-size:13px; margin:0 0 4px 0;">Notas operacionais</h2>
+          <div class="muted small" id="opsNotes" style="font-size:11px;"></div>
         </div>
       </div>
     </div>
@@ -1148,11 +1148,11 @@ var o=[];var l=Array.isArray(e);for(f=n.s.c;f<=n.e.c;++f)s[f]=ya(f);for(var c=n.
     table = new Tabulator("#table", {
       data: [],
       layout: "fitDataStretch",
-      height: "min(62vh, 620px)",
+      height: "calc(100vh - 400px)",
       columns,
       pagination: true,
-      paginationSize: 25,
-      paginationSizeSelector: [25, 50, 100, 200],
+      paginationSize: 20,
+      paginationSizeSelector: [20, 50, 100],
       movableColumns: true,
       reactiveData: true,
     });
