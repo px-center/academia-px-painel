@@ -393,6 +393,7 @@ var o=[];var l=Array.isArray(e);for(f=n.s.c;f<=n.e.c;++f)s[f]=ya(f);for(var c=n.
             <div><label>Estado</label><select id="fEstado" onchange="applyFilters()"></select></div>
             <div><label>Tipo</label><select id="fTipo" onchange="applyFilters()"></select></div>
             <div><label>Elegibilidade</label><select id="fElig" onchange="applyFilters()"></select></div>
+            <div><label>Mês referência</label><select id="fMes" onchange="applyFilters()"></select></div>
           </div>
 
           <div class="filters" style="margin-top:10px;">
@@ -726,6 +727,7 @@ var o=[];var l=Array.isArray(e);for(f=n.s.c;f<=n.e.c;++f)s[f]=ya(f);for(var c=n.
     const colPont = pick(["PONT. TOTAL", "PONT TOTAL", "PONTTOTAL"]);
     const colCtrl = pick(["CONTROLE"]);
     const colCresc= pick(["CLASS_CRESCIMENTO", "CLASS CRESCIMENTO", "CLASSE CRESCIMENTO"]);
+    const colMes  = pick(["MES", "MÊS", "MESREF", "MES_REF"]);
 
     const out = rows.map((r) => {
       const nome = norm(r[colName]);
@@ -751,6 +753,7 @@ var o=[];var l=Array.isArray(e);for(f=n.s.c;f<=n.e.c;++f)s[f]=ya(f);for(var c=n.
         "PONT. TOTAL": colPont ? (r[colPont] === "" ? "" : Number(r[colPont])) : "",
         "CONTROLE": colCtrl ? norm(r[colCtrl]) : "",
         "CLASS_CRESCIMENTO": colCresc ? (r[colCresc] === "" ? "" : Number(r[colCresc])) : "",
+        "MES": colMes ? norm(r[colMes]) : "",
         "Conteúdo Personalizado (Visão GS)": cpO,
         "Telemetria (Visão GS)": tmO
       };
@@ -803,12 +806,22 @@ var o=[];var l=Array.isArray(e);for(f=n.s.c;f<=n.e.c;++f)s[f]=ya(f);for(var c=n.
     fillSelect("fTM", STATUS_SET, false);
     fillSelect("fElig", ["(Todos)", "Elegível", "Não elegível"], false);
 
+    // Month filter — sort chronologically, default to latest month
+    const rawMonths = [...new Set(data.map(r => norm(r.MES)).filter(m => m))];
+    rawMonths.sort((a, b) => {
+      const pa = a.split('/'), pb = b.split('/');
+      return (pa[2]+pa[1]+pa[0]).localeCompare(pb[2]+pb[1]+pb[0]);
+    });
+    fillSelect("fMes", rawMonths);
+    const latestMonth = rawMonths.length ? rawMonths[rawMonths.length - 1] : "(Todos)";
+
     document.getElementById("fCavaleiro").value = "(Todos)";
     document.getElementById("fEstado").value = "(Todos)";
     document.getElementById("fTipo").value = "(Todos)";
     document.getElementById("fCP").value = "(Todos)";
     document.getElementById("fTM").value = "(Todos)";
     document.getElementById("fElig").value = "(Todos)";
+    document.getElementById("fMes").value = latestMonth;
   }
 
   function getFilteredRows(){
@@ -819,9 +832,11 @@ var o=[];var l=Array.isArray(e);for(f=n.s.c;f<=n.e.c;++f)s[f]=ya(f);for(var c=n.
     const cp = document.getElementById("fCP").value;
     const tm = document.getElementById("fTM").value;
     const elig = document.getElementById("fElig").value;
+    const mes = document.getElementById("fMes").value;
     const thresh = getEligThresh();
 
     return CURRENT_DATA.filter(r => {
+      if (mes !== "(Todos)" && norm(r.MES) !== mes) return false;
       if (cav !== "(Todos)" && norm(r.CAVALEIRO) !== cav) return false;
       if (est !== "(Todos)" && norm(r.ESTADO) !== est) return false;
       if (tipo !== "(Todos)" && norm(r.TIPO) !== tipo) return false;
@@ -847,7 +862,7 @@ var o=[];var l=Array.isArray(e);for(f=n.s.c;f<=n.e.c;++f)s[f]=ya(f);for(var c=n.
 
   function resetAll(){
     document.getElementById("q").value = "";
-    for (const id of ["fCavaleiro","fEstado","fTipo","fCP","fTM","fElig"]){
+    for (const id of ["fCavaleiro","fEstado","fTipo","fCP","fTM","fElig","fMes"]){
       document.getElementById(id).value = "(Todos)";
     }
     applyFilters();
@@ -1073,6 +1088,7 @@ var o=[];var l=Array.isArray(e);for(f=n.s.c;f<=n.e.c;++f)s[f]=ya(f);for(var c=n.
     if (table) return;
 
     const columns = [
+      {title:"Mês", field:"MES", width:90},
       {title:"CNPJ", field:"cnpj", width:110},
       {title:"Cliente", field:"NOME TRANSPORTADORA(S)", minWidth:260, headerFilter:true},
       {title:"Tipo", field:"TIPO", width:140},
@@ -1176,6 +1192,7 @@ var o=[];var l=Array.isArray(e);for(f=n.s.c;f<=n.e.c;++f)s[f]=ya(f);for(var c=n.
     const thresh = getEligThresh();
 
     const base = rows.map((r) => ({
+      "Mês": norm(r.MES),
       "CNPJ": norm(r.cnpj),
       "Cliente": norm(r["NOME TRANSPORTADORA(S)"]),
       "Tipo": norm(r["TIPO"]),
@@ -1310,6 +1327,10 @@ var o=[];var l=Array.isArray(e);for(f=n.s.c;f<=n.e.c;++f)s[f]=ya(f);for(var c=n.
       const btnId = "btn" + t.charAt(0).toUpperCase() + t.slice(1);
       document.getElementById(elId).style.display = (t === which ? "block" : "none");
       document.getElementById(btnId).classList.toggle("active", t === which);
+    }
+    // Tabulator needs redraw after becoming visible (was display:none)
+    if (which === "raw" && table) {
+      setTimeout(function(){ table.redraw(true); }, 50);
     }
   }
 
